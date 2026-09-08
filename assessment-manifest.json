@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "project_id": "SOC-A1",
+  "variant": "V1",
+  "candidate_binding": "UBI-2026-0246",
+  "assigned_pack": {
+    "file_name": "soc-analysis-stage-9-shared-b1.tar.gz",
+    "sha256": "df8fb093a6a69ca885a0f22518f842cf6a470232a6df821fb759a507389f2022",
+    "manifest_signature": "aa55207a99e0b259ba498d1191bd324c78fd053e4d6724e3fa96f899700c94fe",
+    "verified_before_use": true
+  },
+  "commit": "REPLACE-WITH-FROZEN-40-CHARACTER-COMMIT",
+  "supported_environment": {
+    "os": "Kali GNU/Linux Rolling 2025.2",
+    "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz; 2 vCPU",
+    "memory_gb": 2.9,
+    "tool_versions": {
+      "python": "3.13.9",
+      "git": "2.47.2",
+      "tshark": "4.4.6",
+      "zeek": "not installed"
+    }
+  },
+  "commands": {
+    "provision": "",
+    "build": "",
+    "test": "",
+    "clean": ""
+  },
+  "results": {
+    "public_tests": {
+      "passed": 0,
+      "failed": 0,
+      "report": ""
+    },
+    "runtime_seconds": 0,
+    "peak_memory_mb": 0,
+    "output_hashes": {}
+  },
+  "inputs": [],
+  "outputs": [],
+  "manual_preconditions": [],
+  "known_limitations": [
+    "Zeek is not installed in the current environment; TShark is available as the packet-analysis fallback."
+  ]
+}
