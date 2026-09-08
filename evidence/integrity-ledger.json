@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "manifest": "working/evidence/sealed-evidence/case-manifest.csv",
+  "artifacts": [
+    {
+      "artifact": "evidence/host/powershell-operational.jsonl",
+      "path": "working/evidence/sealed-evidence/evidence/host/powershell-operational.jsonl",
+      "expected_size": 244,
+      "expected_sha256": "09ff04af864454f87f94dc71406c2cb01c49f2830913e5be6ab0ffc64a3840ad",
+      "exists": true,
+      "actual_size": 244,
+      "actual_sha256": "09ff04af864454f87f94dc71406c2cb01c49f2830913e5be6ab0ffc64a3840ad",
+      "size_match": true,
+      "hash_match": true,
+      "verdict": "match"
+    },
+    {
+      "artifact": "evidence/host/sysmon.jsonl",
+      "path": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+      "expected_size": 24993908,
+      "expected_sha256": "f27c3807903ef8a6c72847761b0e62af5b1da8dd599c52782c38d2386acbab9d",
+      "exists": true,
+      "actual_size": 24993908,
+      "actual_sha256": "f27c3807903ef8a6c72847761b0e62af5b1da8dd599c52782c38d2386acbab9d",
+      "size_match": true,
+      "hash_match": true,
+      "verdict": "match"
+    },
+    {
+      "artifact": "evidence/mail/initial-access.eml",
+      "path": "working/evidence/sealed-evidence/evidence/mail/initial-access.eml",
+      "expected_size": 778,
+      "expected_sha256": "8dd40f12866217b153a7af539d675950c3edcfdd78649e7ddf236adff6e14d4e",
+      "exists": true,
+      "actual_size": 778,
+      "actual_sha256": "8dd40f12866217b153a7af539d675950c3edcfdd78649e7ddf236adff6e14d4e",
+      "size_match": true,
+      "hash_match": true,
+      "verdict": "match"
+    },
+    {
+      "artifact": "evidence/network/incident.pcap",
+      "path": "working/evidence/sealed-evidence/evidence/network/incident.pcap",
+      "expected_size": 57765,
+      "expected_sha256": "a2ff3da37c045ab933c5c4a71c18b8ca80596349e19d3fb5624d27228e70d90d",
+      "exists": true,
+      "actual_size": 57765,
+      "actual_sha256": "a2ff3da37c045ab933c5c4a71c18b8ca80596349e19d3fb5624d27228e70d90d",
+      "size_match": true,
+      "hash_match": true,
+      "verdict": "match"
+    }
+  ],
+  "summary": {
+    "total": 4,
+    "match": 4,
+    "tampered_or_mismatch": 0,
+    "missing": 0
+  }
+}
