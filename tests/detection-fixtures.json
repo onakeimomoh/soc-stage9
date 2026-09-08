@@ -1,0 +1,127 @@
+{
+  "fixtures": [
+    {
+      "fixture_id": "positive-office-archive-egress",
+      "expected_alert": true,
+      "events": [
+        {
+          "timestamp": "2026-01-01T10:00:00Z",
+          "computer": "LAB-WKS-01",
+          "user": "example\\user1",
+          "event_type": "process_start",
+          "image": "powershell.exe",
+          "parent_image": "WINWORD.EXE",
+          "detail": "powershell execution"
+        },
+        {
+          "timestamp": "2026-01-01T10:00:12Z",
+          "computer": "LAB-WKS-01",
+          "user": "example\\user1",
+          "event_type": "process_start",
+          "image": "tar.exe",
+          "parent_image": "powershell.exe",
+          "detail": "tar -a -c -f export.zip records.csv"
+        },
+        {
+          "timestamp": "2026-01-01T10:00:20Z",
+          "computer": "LAB-WKS-01",
+          "user": "example\\user1",
+          "event_type": "network_connect",
+          "image": "curl.exe",
+          "parent_image": "powershell.exe",
+          "detail": "collector.example:8443"
+        }
+      ]
+    },
+    {
+      "fixture_id": "negative-benign-admin-archive",
+      "expected_alert": false,
+      "events": [
+        {
+          "timestamp": "2026-01-01T11:00:00Z",
+          "computer": "LAB-SRV-01",
+          "user": "example\\admin",
+          "event_type": "process_start",
+          "image": "powershell.exe",
+          "parent_image": "explorer.exe",
+          "detail": "administrative shell"
+        },
+        {
+          "timestamp": "2026-01-01T11:00:20Z",
+          "computer": "LAB-SRV-01",
+          "user": "example\\admin",
+          "event_type": "process_start",
+          "image": "tar.exe",
+          "parent_image": "powershell.exe",
+          "detail": "tar -a -c -f backup.zip logs"
+        }
+      ]
+    },
+    {
+      "fixture_id": "negative-different-users",
+      "expected_alert": false,
+      "events": [
+        {
+          "timestamp": "2026-01-01T12:00:00Z",
+          "computer": "LAB-WKS-02",
+          "user": "example\\user1",
+          "event_type": "process_start",
+          "image": "powershell.exe",
+          "parent_image": "WINWORD.EXE",
+          "detail": "powershell execution"
+        },
+        {
+          "timestamp": "2026-01-01T12:00:10Z",
+          "computer": "LAB-WKS-02",
+          "user": "example\\user2",
+          "event_type": "process_start",
+          "image": "tar.exe",
+          "parent_image": "powershell.exe",
+          "detail": "archive operation"
+        },
+        {
+          "timestamp": "2026-01-01T12:00:20Z",
+          "computer": "LAB-WKS-02",
+          "user": "example\\user2",
+          "event_type": "network_connect",
+          "image": "curl.exe",
+          "parent_image": "powershell.exe",
+          "detail": "remote endpoint"
+        }
+      ]
+    },
+    {
+      "fixture_id": "negative-outside-window",
+      "expected_alert": false,
+      "events": [
+        {
+          "timestamp": "2026-01-01T13:00:00Z",
+          "computer": "LAB-WKS-03",
+          "user": "example\\user3",
+          "event_type": "process_start",
+          "image": "powershell.exe",
+          "parent_image": "EXCEL.EXE",
+          "detail": "powershell execution"
+        },
+        {
+          "timestamp": "2026-01-01T13:03:00Z",
+          "computer": "LAB-WKS-03",
+          "user": "example\\user3",
+          "event_type": "process_start",
+          "image": "7z.exe",
+          "parent_image": "powershell.exe",
+          "detail": "archive operation"
+        },
+        {
+          "timestamp": "2026-01-01T13:03:05Z",
+          "computer": "LAB-WKS-03",
+          "user": "example\\user3",
+          "event_type": "network_connect",
+          "image": "curl.exe",
+          "parent_image": "powershell.exe",
+          "detail": "remote endpoint"
+        }
+      ]
+    }
+  ]
+}

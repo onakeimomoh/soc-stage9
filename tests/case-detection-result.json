@@ -1,0 +1,44 @@
+{
+  "alert": true,
+  "binding_derivation": "Unique non-empty binding parsed from PowerShell source; value intentionally omitted from report.",
+  "binding_source": "working/evidence/sealed-evidence/evidence/host/powershell-operational.jsonl",
+  "case_events_examined": 6,
+  "elapsed_seconds": 7.0,
+  "matched_events": [
+    {
+      "computer": "NS-WKS-101",
+      "detail": "Invoke-SyntheticCaseSimulation -Mode Training",
+      "event_id": "attack-02",
+      "event_type": "process_start",
+      "image": "powershell.exe",
+      "parent_image": "WINWORD.EXE",
+      "source_line": 50002,
+      "timestamp": "2026-07-15T11:46:42Z",
+      "user": "northstar\\analyst1"
+    },
+    {
+      "computer": "NS-WKS-101",
+      "detail": "tar -a -c -f case-export.zip synthetic-records.csv",
+      "event_id": "attack-04",
+      "event_type": "process_start",
+      "image": "tar.exe",
+      "parent_image": "powershell.exe",
+      "source_line": 50004,
+      "timestamp": "2026-07-15T11:46:46Z",
+      "user": "northstar\\analyst1"
+    },
+    {
+      "computer": "NS-WKS-101",
+      "detail": "sync-v1.updates-example.invalid:8443",
+      "event_id": "attack-05",
+      "event_type": "network_connect",
+      "image": "curl.exe",
+      "parent_image": "powershell.exe",
+      "source_line": 50005,
+      "timestamp": "2026-07-15T11:46:49Z",
+      "user": "northstar\\analyst1"
+    }
+  ],
+  "rule_id": "DETECT-OFFICE-PS-ARCHIVE-EGRESS",
+  "sysmon_source": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl"
+}

@@ -1,0 +1,33 @@
+{
+  "rule_id": "DETECT-OFFICE-PS-ARCHIVE-EGRESS",
+  "title": "Office spawned PowerShell followed by archive staging and network egress",
+  "description": "Detects a short host/user sequence where an Office application spawns PowerShell, an archive utility stages data, and a command-line transfer utility initiates network communication.",
+  "severity": "high",
+  "max_window_seconds": 120,
+  "stages": {
+    "office_powershell": {
+      "event_type": "process_start",
+      "image": ["powershell.exe", "pwsh.exe"],
+      "parent_image": ["winword.exe", "excel.exe", "powerpnt.exe", "outlook.exe"]
+    },
+    "archive_staging": {
+      "event_type": "process_start",
+      "image": ["tar.exe", "7z.exe", "7za.exe", "rar.exe"]
+    },
+    "network_egress": {
+      "event_type": "network_connect",
+      "image": ["curl.exe", "powershell.exe", "pwsh.exe"]
+    }
+  },
+  "correlation": [
+    "same_host",
+    "same_user",
+    "ordered",
+    "within_max_window"
+  ],
+  "mitre": [
+    "T1059.001",
+    "T1560",
+    "T1041"
+  ]
+}

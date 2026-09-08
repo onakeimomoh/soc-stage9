@@ -1,0 +1,44 @@
+{
+  "fixtures_failed": 0,
+  "fixtures_passed": 4,
+  "fixtures_total": 4,
+  "results": [
+    {
+      "actual_alert": true,
+      "elapsed_seconds": 20.0,
+      "expected_alert": true,
+      "fixture_id": "positive-office-archive-egress",
+      "matched_event_indexes": [
+        0,
+        1,
+        2
+      ],
+      "pass": true
+    },
+    {
+      "actual_alert": false,
+      "elapsed_seconds": null,
+      "expected_alert": false,
+      "fixture_id": "negative-benign-admin-archive",
+      "matched_event_indexes": [],
+      "pass": true
+    },
+    {
+      "actual_alert": false,
+      "elapsed_seconds": null,
+      "expected_alert": false,
+      "fixture_id": "negative-different-users",
+      "matched_event_indexes": [],
+      "pass": true
+    },
+    {
+      "actual_alert": false,
+      "elapsed_seconds": null,
+      "expected_alert": false,
+      "fixture_id": "negative-outside-window",
+      "matched_event_indexes": [],
+      "pass": true
+    }
+  ],
+  "rule_id": "DETECT-OFFICE-PS-ARCHIVE-EGRESS"
+}
