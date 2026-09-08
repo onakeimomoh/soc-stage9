@@ -1,0 +1,129 @@
+{
+  "alternative_hypothesis": {
+    "description": "Observed behavior may be an authorized synthetic training simulation rather than an actual malicious compromise.",
+    "state": "supported"
+  },
+  "case_binding": "8d919c5bfb955d01",
+  "findings": [
+    {
+      "evidence": [
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/mail/initial-access.eml",
+          "locator": "Subject: Case export reconciliation 8d919c5b; attachment case-instructions-8d919c5b.txt"
+        },
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+          "locator": "JSONL lines 50001-50002; attack-01, attack-02"
+        }
+      ],
+      "finding": "Case delivery is represented by the email attachment case-instructions-8d919c5b.txt. Host execution begins with WINWORD.EXE and is immediately followed by powershell.exe running Invoke-SyntheticCaseSimulation -Mode Training.",
+      "question": 1,
+      "status": "confirmed",
+      "topic": "initial_access"
+    },
+    {
+      "evidence": [
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+          "locator": "JSONL line 50005; attack-05"
+        },
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/network/incident.pcap",
+          "locator": "frames 49-50; tcp.stream 0"
+        }
+      ],
+      "finding": "The transfer endpoint is sync-v1.updates-example.invalid:8443 at 203.0.113.195:8443. The confirmed HTTP transfer occurs between the POST at frame 49 and 201 response at frame 50.",
+      "question": 2,
+      "status": "confirmed",
+      "topic": "transfer_infrastructure"
+    },
+    {
+      "evidence": [
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+          "locator": "JSONL lines 50001-50006"
+        }
+      ],
+      "finding": "No privilege increase is established by the available case evidence. The six non-noise Sysmon events remain under northstar\\analyst1 and provide no confirmed administrator, SYSTEM, token-elevation, or credential-transition evidence.",
+      "question": 3,
+      "status": "not_confirmed",
+      "topic": "privilege_increase"
+    },
+    {
+      "evidence": [
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+          "locator": "JSONL lines 50001-50006"
+        },
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/network/incident.pcap",
+          "locator": "tcp.stream 0"
+        }
+      ],
+      "finding": "No host-to-host lateral movement is established. All six non-noise case events occur on NS-WKS-101; the confirmed network activity is toward the transfer endpoint rather than another internal case host.",
+      "question": 4,
+      "status": "not_confirmed",
+      "topic": "lateral_movement"
+    },
+    {
+      "evidence": [
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+          "locator": "JSONL line 50004; attack-04"
+        },
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/network/incident.pcap",
+          "locator": "frames 49-50; tcp.stream 0"
+        },
+        {
+          "artifact": "recovered/recovery-metadata.json",
+          "locator": "recovery and http_response objects"
+        }
+      ],
+      "finding": "synthetic-records.csv was staged into case-export.zip and the exact ZIP body was recovered from the HTTP POST. The server returned HTTP 201 Created.",
+      "question": 5,
+      "status": "confirmed",
+      "topic": "data_access_staging_transfer"
+    },
+    {
+      "evidence": [
+        {
+          "artifact": "recovered/recovery-metadata.json",
+          "locator": "recovery.members[name=synthetic-records.csv].csv_data_records"
+        }
+      ],
+      "finding": "Recovered synthetic-records.csv contains exactly 5137 data records.",
+      "question": 6,
+      "status": "confirmed",
+      "topic": "recovered_records"
+    },
+    {
+      "evidence": [
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/powershell-operational.jsonl",
+          "locator": "JSONL line 1; Event 4104"
+        },
+        {
+          "artifact": "working/evidence/sealed-evidence/evidence/host/sysmon.jsonl",
+          "locator": "JSONL line 50002; attack-02"
+        }
+      ],
+      "finding": "The strongest evidence challenging a malicious-incident interpretation is the PowerShell record explicitly labeling the activity a training simulation sending synthetic records to a local collector, reinforced by Sysmon '-Mode Training'.",
+      "question": 7,
+      "status": "confirmed",
+      "topic": "alternative_hypothesis"
+    }
+  ],
+  "recovery_summary": {
+    "archive_sha256": "8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825",
+    "archive_size": 53891,
+    "csv_sha256": "622bdcfbf85d51b1cdf45e26f5cd016a998d0e220fbb9a21b104278f4b0af99f",
+    "marker": "UBI-A9-SHARED-B1",
+    "member_count": 2,
+    "post_frame": 49,
+    "record_count": 5137,
+    "response_code": 201,
+    "response_frame": 50
+  },
+  "schema_version": "1"
+}
