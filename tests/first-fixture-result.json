@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "tests": [
+    {
+      "id": "PARSER-EVTX",
+      "passed": true,
+      "result": {
+        "event_type": "authentication",
+        "source_locator": {
+          "source": "evtx",
+          "event_id": 4624,
+          "computer": "WS-01",
+          "time": "2026-07-13T07:00:00Z"
+        }
+      },
+      "expected": {
+        "event_type": "authentication",
+        "source_locator_required": true
+      }
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 0
+  }
+}

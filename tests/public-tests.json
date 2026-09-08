@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "tests": [
+    { "id": "PARSER-EVTX", "input": { "source": "evtx", "event_id": 4624, "computer": "WS-01", "time": "2026-07-13T07:00:00Z" }, "expected": { "event_type": "authentication", "source_locator_required": true } },
+    { "id": "PARSER-SYSMON", "input": { "source": "sysmon", "event_id": 1, "image": "powershell.exe", "parent": "winword.exe" }, "expected": { "event_type": "process_start", "source_locator_required": true } },
+    { "id": "PARSER-ZEEK-CONN", "input": { "source": "zeek_conn", "uid": "C1", "orig": "10.0.0.4", "resp": "192.0.2.4" }, "expected": { "event_type": "network_connection", "correlation_id": "C1" } },
+    { "id": "PARSER-ZEEK-DNS", "input": { "source": "zeek_dns", "uid": "D1", "query": "sync.invalid" }, "expected": { "event_type": "dns_query", "correlation_id": "D1" } },
+    { "id": "PARSER-EMAIL", "input": { "source": "eml", "message_id": "<case-1@invalid>", "attachment_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }, "expected": { "event_type": "email_delivery" } },
+    { "id": "MANIFEST-TAMPER", "input": { "expected_sha256": "aaa", "actual_sha256": "bbb" }, "expected": { "verdict": "tampered", "ingest": false } },
+    { "id": "DAMAGED-ROW", "input": "{broken-json", "expected": { "verdict": "quarantine", "reason": "parse_error" } },
+    { "id": "CLOCK-OFFSET", "input": { "raw": "2026-07-13T09:00:00Z", "offset_seconds": -3600 }, "expected": { "normalized": "2026-07-13T08:00:00Z" } },
+    { "id": "DUPLICATE-EVENT", "input_ids": ["E-10", "E-10"], "expected": { "output_count": 1, "duplicate_count": 1 } },
+    { "id": "SPLIT-ARCHIVE", "input": [{ "stream": 2, "sequence": 20 }, { "stream": 1, "sequence": 10 }, { "stream": 3, "sequence": 30 }], "expected": { "ordered_streams": [1, 2, 3] } },
+    { "id": "BENIGN-ADMIN", "input": { "change_id": "CHG-1", "actor": "admin", "approved": true }, "expected": { "classification": "benign_approved" } },
+    { "id": "MISSING-LOCATOR", "input": { "event_type": "process_start", "source_locator": null }, "expected": { "verdict": "invalid_output" } }
+  ]
+}
