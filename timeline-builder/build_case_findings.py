@@ -3,6 +3,8 @@
 import csv
 import hashlib
 import json
+from email import policy
+from email.parser import BytesParser
 from pathlib import Path
 
 RECOVERY = Path("recovered/recovery-metadata.json")
@@ -54,14 +56,31 @@ if len(bindings) != 1:
 
 case_binding = next(iter(bindings))
 
-email_text = EMAIL.read_text(
-    encoding="utf-8",
-    errors="replace",
+message = BytesParser(policy=policy.default).parsebytes(
+    EMAIL.read_bytes()
 )
 
-if case_binding not in email_text:
+decoded_email_parts = []
+
+for part in message.walk():
+    if part.is_multipart():
+        continue
+
+    payload = part.get_payload(decode=True)
+
+    if payload is None:
+        text = str(part.get_payload())
+    else:
+        charset = part.get_content_charset() or "utf-8"
+        text = payload.decode(charset, errors="replace")
+
+    decoded_email_parts.append(text)
+
+email_decoded_text = "\n".join(decoded_email_parts)
+
+if case_binding not in email_decoded_text:
     raise RuntimeError(
-        "Derived PowerShell binding is not present in the email artifact"
+        "Derived PowerShell binding is not present in decoded email content"
     )
 
 with TIMELINE.open(newline="", encoding="utf-8") as f:
