@@ -8,3 +8,6 @@ htmlcov/
 .DS_Store
 Thumbs.db
 working/
+
+# Assigned raw evidence - preserve locally, do not version
+original/
