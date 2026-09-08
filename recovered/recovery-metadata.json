@@ -1,0 +1,57 @@
+{
+  "errors": [],
+  "http_request": {
+    "content_length": 53891,
+    "destination_ip": "203.0.113.195",
+    "destination_port": 8443,
+    "frame_number": 49,
+    "host": "sync-v1.updates-example.invalid",
+    "method": "POST",
+    "observed_utc_from_epoch": "2026-07-14T12:00:49.049000Z",
+    "raw_epoch": "1784030449.049000000",
+    "source_ip": "10.71.40.161",
+    "source_port": 49027,
+    "uri": "/collect/8d919c5bfb955d01/case-export.zip"
+  },
+  "parser_status": "ok",
+  "recovery": {
+    "archive_path": "recovered/case-export.zip",
+    "archive_sha256": "8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825",
+    "archive_size": 53891,
+    "content_length_match": true,
+    "member_count": 2,
+    "members": [
+      {
+        "compressed_size": 19,
+        "marker_value": "UBI-A9-SHARED-B1",
+        "name": "evidence-marker.txt",
+        "sha256": "eaf231447870009620dd3a4611ae0eff695965c3443fa21b260595562c03cf02",
+        "uncompressed_size": 17
+      },
+      {
+        "compressed_size": 53618,
+        "csv_columns": [
+          "record_id",
+          "customer_ref",
+          "case_type",
+          "region"
+        ],
+        "csv_data_records": 5137,
+        "name": "synthetic-records.csv",
+        "sha256": "622bdcfbf85d51b1cdf45e26f5cd016a998d0e220fbb9a21b104278f4b0af99f",
+        "uncompressed_size": 243191
+      }
+    ],
+    "zip_valid": true
+  },
+  "schema_version": "1",
+  "source": {
+    "artifact_path": "working/evidence/sealed-evidence/evidence/network/incident.pcap",
+    "exact_locator": {
+      "frame_number": 49,
+      "tcp_stream": 0
+    },
+    "sha256": "a2ff3da37c045ab933c5c4a71c18b8ca80596349e19d3fb5624d27228e70d90d"
+  },
+  "warnings": []
+}
