@@ -13,6 +13,14 @@
     "source_port": 49027,
     "uri": "/collect/8d919c5bfb955d01/case-export.zip"
   },
+  "http_response": {
+    "frame_number": 50,
+    "observed_utc_from_epoch": "2026-07-14T12:00:50.050000Z",
+    "raw_epoch": "1784030450.050000000",
+    "reason": "Created",
+    "status_code": 201,
+    "tcp_stream": 0
+  },
   "parser_status": "ok",
   "recovery": {
     "archive_path": "recovered/case-export.zip",

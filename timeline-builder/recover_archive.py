@@ -20,11 +20,11 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def run_tshark(pcap: Path, fields):
+def run_tshark(pcap: Path, display_filter, fields):
     cmd = [
         "tshark",
         "-r", str(pcap),
-        "-Y", 'http.request.method == "POST"',
+        "-Y", display_filter,
         "-T", "fields",
         "-E", "separator=\t",
     ]
@@ -84,7 +84,11 @@ def main():
         "http.file_data",
     ]
 
-    lines = run_tshark(pcap, fields)
+    lines = run_tshark(
+        pcap,
+        'http.request.method == "POST"',
+        fields,
+    )
 
     if len(lines) != 1:
         raise RuntimeError(
@@ -169,6 +173,49 @@ def main():
 
                 members.append(member)
 
+
+    response_fields = [
+        "frame.number",
+        "frame.time_epoch",
+        "tcp.stream",
+        "http.response.code",
+        "http.response.phrase",
+    ]
+
+    response_lines = run_tshark(
+        pcap,
+        "http.response",
+        response_fields,
+    )
+
+    response = None
+    if len(response_lines) == 1:
+        rparts = response_lines[0].split("\t")
+        if len(rparts) == len(response_fields):
+            rrow = dict(zip(response_fields, rparts))
+            response = {
+                "frame_number": int(rrow["frame.number"]),
+                "raw_epoch": rrow["frame.time_epoch"],
+                "observed_utc_from_epoch": datetime.fromtimestamp(
+                    float(rrow["frame.time_epoch"]),
+                    tz=timezone.utc
+                ).isoformat().replace("+00:00", "Z"),
+                "tcp_stream": int(rrow["tcp.stream"]),
+                "status_code": int(rrow["http.response.code"]),
+                "reason": rrow["http.response.phrase"],
+            }
+        else:
+            warnings.append(
+                f"Unexpected HTTP response field count: "
+                f"{len(rparts)} != {len(response_fields)}"
+            )
+    elif len(response_lines) == 0:
+        warnings.append("No HTTP response found")
+    else:
+        warnings.append(
+            f"Expected one HTTP response, found {len(response_lines)}"
+        )
+
     epoch = row["frame.time_epoch"]
     observed_utc = datetime.fromtimestamp(
         float(epoch),
@@ -198,6 +245,7 @@ def main():
             "uri": row["http.request.uri"],
             "content_length": advertised_length,
         },
+        "http_response": response,
         "recovery": {
             "archive_path": str(archive),
             "archive_size": actual_length,
