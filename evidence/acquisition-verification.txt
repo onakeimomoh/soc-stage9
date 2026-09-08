@@ -1,0 +1,12 @@
+Candidate: UBI-2026-0246
+Variant: V1
+Private assignment set: D1
+Evidence marker: UBI-A9-12824675BE8D
+
+Assigned archive: soc-analysis-stage-9-shared-b1.tar.gz
+Expected bytes: 2723254
+Verified bytes: 2723254
+Expected SHA-256: df8fb093a6a69ca885a0f22518f842cf6a470232a6df821fb759a507389f2022
+Verified SHA-256: df8fb093a6a69ca885a0f22518f842cf6a470232a6df821fb759a507389f2022
+Manifest signature: aa55207a99e0b259ba498d1191bd324c78fd053e4d6724e3fa96f899700c94fe
+Verification result: PASS
