@@ -158,7 +158,10 @@ for line_no, line in enumerate(SYSMON.open(), 1):
         event_type == "network_connect"
         and image_name in {"curl.exe", "powershell.exe", "pwsh.exe"}
     ):
-        technique = "T1041 Exfiltration Over C2 Channel"
+        technique = (
+            "T1041 Exfiltration Over C2 Channel "
+            "(behavioral mapping; malicious intent not established)"
+        )
 
     rows.append({
         "event_id": o["event_id"],
