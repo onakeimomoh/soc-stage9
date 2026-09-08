@@ -5,12 +5,12 @@
     "offset_seconds_applied": 0
   },
   "powershell": {
-    "basis": "Correlated PowerShell Event 4104 for Invoke-SyntheticCaseSimulation.ps1 with Sysmon attack-02 for the same PowerShell execution and evidence binding. After Sysmon normalization, attack-02 is 2026-07-14T12:00:42Z; PowerShell reports 2026-07-14T12:00:04Z.",
+    "basis": "Correlated PowerShell Event 4104 with the matching Sysmon PowerShell process execution using script context and the same evidence binding. After Sysmon normalization, the process event is 2026-07-14T12:00:42Z; PowerShell reports 2026-07-14T12:00:04Z.",
     "confidence": "high",
     "offset_seconds_applied": 38
   },
   "sysmon": {
-    "basis": "Correlated Sysmon attack-05 curl connection to sync-v1.updates-example.invalid:8443 with PCAP frame 49 HTTP POST to the same host/case binding.",
+    "basis": "Correlated Sysmon curl network connection with the matching PCAP HTTP POST using destination context and the same case binding.",
     "confidence": "high",
     "offset_seconds_applied": -85560
   }

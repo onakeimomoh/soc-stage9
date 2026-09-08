@@ -29,32 +29,30 @@ def fmt(dt):
 
 # Evidence-derived source clock model.
 #
-# Sysmon attack-05 records the curl network connection at:
-#   2026-07-15T11:46:49Z
+# The case-correlated Sysmon curl network connection occurs at
+# 2026-07-15T11:46:49Z, while the matching PCAP HTTP POST occurs at
+# 2026-07-14T12:00:49.049Z.
 #
-# PCAP frame 49 records the matching HTTP POST at:
-#   2026-07-14T12:00:49.049Z
-#
-# The near-identical seconds and exact host/case binding support a
-# Sysmon clock correction of -23h46m.
+# The matching transfer behavior, destination context, and case binding
+# support a Sysmon clock correction of -23h46m.
 CLOCK_MODEL = {
     "sysmon": {
         "offset_seconds_applied": -(23 * 3600 + 46 * 60),
         "basis": (
-            "Correlated Sysmon attack-05 curl connection to "
-            "sync-v1.updates-example.invalid:8443 with PCAP frame 49 "
-            "HTTP POST to the same host/case binding."
+            "Correlated Sysmon curl network connection with the "
+            "matching PCAP HTTP POST using destination context and "
+            "the same case binding."
         ),
         "confidence": "high",
     },
     "powershell": {
         "offset_seconds_applied": 38,
         "basis": (
-            "Correlated PowerShell Event 4104 for "
-            "Invoke-SyntheticCaseSimulation.ps1 with Sysmon attack-02 "
-            "for the same PowerShell execution and evidence binding. "
-            "After Sysmon normalization, attack-02 is 2026-07-14T12:00:42Z; "
-            "PowerShell reports 2026-07-14T12:00:04Z."
+            "Correlated PowerShell Event 4104 with the matching "
+            "Sysmon PowerShell process execution using script context "
+            "and the same evidence binding. After Sysmon normalization, "
+            "the process event is 2026-07-14T12:00:42Z; PowerShell "
+            "reports 2026-07-14T12:00:04Z."
         ),
         "confidence": "high",
     },
@@ -74,9 +72,30 @@ def corrected(ts, source):
 
 rows = []
 
+# Derive the case correlation binding from the PowerShell evidence rather
+# than embedding a case-specific value in the timeline builder.
+powershell_rows = [
+    (line_no, json.loads(line))
+    for line_no, line in enumerate(POWERSHELL.open(), 1)
+    if line.strip()
+]
+
+case_bindings = {
+    str(o.get("binding", "")).strip()
+    for _, o in powershell_rows
+    if str(o.get("binding", "")).strip()
+}
+
+if len(case_bindings) != 1:
+    raise RuntimeError(
+        "Expected exactly one unique non-empty PowerShell evidence binding; "
+        f"found {len(case_bindings)}"
+    )
+
+case_binding = next(iter(case_bindings))
+
 # PowerShell
-for line_no, line in enumerate(POWERSHELL.open(), 1):
-    o = json.loads(line)
+for line_no, o in powershell_rows:
 
     rows.append({
         "event_id": f"powershell-{line_no}",
@@ -106,18 +125,39 @@ for line_no, line in enumerate(POWERSHELL.open(), 1):
 for line_no, line in enumerate(SYSMON.open(), 1):
     o = json.loads(line)
 
-    if o.get("evidence_binding") != "8d919c5bfb955d01":
+    if o.get("evidence_binding") != case_binding:
         continue
 
     raw = o["timestamp"]
     corr = corrected(raw, "sysmon")
 
     technique = ""
-    if o["event_id"] == "attack-03":
+
+    event_type = str(o.get("event_type", "")).lower()
+    image_name = (
+        str(o.get("image", ""))
+        .replace("\\", "/")
+        .rsplit("/", 1)[-1]
+        .lower()
+    )
+    detail_lower = str(o.get("detail", "")).lower()
+
+    if event_type == "scheduled_task_create":
         technique = "T1053.005 Scheduled Task/Job: Scheduled Task"
-    elif o["event_id"] == "attack-04":
+
+    elif (
+        event_type == "process_start"
+        and (
+            image_name in {"tar.exe", "7z.exe", "7za.exe", "rar.exe"}
+            or "archive" in detail_lower
+        )
+    ):
         technique = "T1560 Archive Collected Data"
-    elif o["event_id"] == "attack-05":
+
+    elif (
+        event_type == "network_connect"
+        and image_name in {"curl.exe", "powershell.exe", "pwsh.exe"}
+    ):
         technique = "T1041 Exfiltration Over C2 Channel"
 
     rows.append({
@@ -170,7 +210,10 @@ rows.append({
     "exact_locator": (
         f"frame {loc['frame_number']}; tcp.stream {loc['tcp_stream']}"
     ),
-    "attack_technique": "T1041 Exfiltration Over C2 Channel",
+    "attack_technique": (
+        "T1041 Exfiltration Over C2 Channel "
+        "(behavioral mapping; malicious intent not established)"
+    ),
     "confidence": "high",
     "primary_or_supporting": "primary",
     "alternative_interpretation": (
