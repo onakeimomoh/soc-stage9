@@ -1,0 +1,357 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>incident-report</title>
+<style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 18mm 16mm;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111827;
+  font-size: 10.5pt;
+  line-height: 1.48;
+  margin: 0;
+}
+
+h1 {
+  font-size: 22pt;
+  margin: 0 0 14pt 0;
+  color: #111827;
+  border-bottom: 2px solid #374151;
+  padding-bottom: 8pt;
+}
+
+h2 {
+  font-size: 14.5pt;
+  margin: 18pt 0 7pt 0;
+  color: #1f2937;
+  break-after: avoid;
+}
+
+h3 {
+  font-size: 11.5pt;
+  margin: 13pt 0 5pt 0;
+  color: #374151;
+  break-after: avoid;
+}
+
+p {
+  margin: 5pt 0 8pt 0;
+}
+
+ul, ol {
+  margin: 5pt 0 9pt 20pt;
+  padding: 0;
+}
+
+li {
+  margin: 2.5pt 0;
+}
+
+code {
+  font-family: "DejaVu Sans Mono", "Liberation Mono", monospace;
+  font-size: 9pt;
+  background: #f3f4f6;
+  padding: 1pt 3pt;
+  border-radius: 2pt;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f3f4f6;
+  border-left: 3px solid #6b7280;
+  padding: 8pt;
+}
+
+strong {
+  font-weight: 700;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #d1d5db;
+  margin: 14pt 0;
+}
+</style>
+</head>
+<body>
+<h1>Incident Report</h1>
+<h2>Case Identification</h2>
+<ul>
+<li>Intern ID: UBI-2026-0246</li>
+<li>Variant: V1</li>
+<li>Private assignment set: D1</li>
+<li>Private marker: UBI-A9-12824675BE8D</li>
+<li>Case type: Full Incident Response</li>
+<li>Evidence set: soc-analysis-stage-9-shared-b1.tar.gz</li>
+</ul>
+<h2>Executive Summary</h2>
+<p>The supplied evidence confirms a short sequence in which an Office process was followed by PowerShell execution, scheduled-task creation, archive staging, command-line network communication, an HTTP POST containing the staged archive, deletion of the local archive, and an HTTP 201 response.</p>
+<p>The recovered HTTP POST body reconstructed successfully as a valid ZIP archive containing 5,137 synthetic data records and an evidence marker. The reconstructed archive SHA-256 is:</p>
+<p><code>8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825</code></p>
+<p>The technical transfer is confirmed. However, the supplied PowerShell telemetry explicitly describes the action as a training simulation involving synthetic records and a local collector, and the Sysmon PowerShell command includes <code>-Mode Training</code>. Therefore, the evidence supports the occurrence of the technical behavior but does not establish malicious intent.</p>
+<p>Privilege escalation is not confirmed. Host-to-host lateral movement is not confirmed.</p>
+<h2>Scope and Evidence Reviewed</h2>
+<p>The analysis used the following evidence types:</p>
+<ol>
+<li>PowerShell Operational JSONL</li>
+<li>Sysmon JSONL</li>
+<li>Email message and attachment</li>
+<li>Network PCAP</li>
+<li>Recovered archive and extracted CSV content</li>
+</ol>
+<p>The sealed evidence manifest was independently verified. All four sealed source artifacts matched their expected SHA-256 values.</p>
+<h2>Integrity and Reproducibility</h2>
+<p>The original assignment archive was verified before extraction.</p>
+<p>Archive SHA-256:</p>
+<p><code>df8fb093a6a69ca885a0f22518f842cf6a470232a6df821fb759a507389f2022</code></p>
+<p>A streaming integrity ledger independently validated the sealed source evidence.</p>
+<p>The reconstruction pipeline was executed twice. Eight generated outputs were compared by SHA-256 and all outputs were identical across both runs.</p>
+<p>See:</p>
+<ul>
+<li><code>evidence/integrity-ledger.json</code></li>
+<li><code>tests/reproducibility-results.json</code></li>
+</ul>
+<h2>Clock Normalization</h2>
+<p>The supplied evidence does not contain explicit authoritative clock-offset metadata.</p>
+<p>Two correlation-derived offsets were applied:</p>
+<h3>Sysmon</h3>
+<p>Applied correction: <code>-23:46:00</code></p>
+<p>Basis: the case-correlated Sysmon curl network event aligns with the PCAP HTTP POST using transfer behavior, destination context, and the same evidence binding.</p>
+<p>Confidence: high.</p>
+<h3>PowerShell</h3>
+<p>Applied correction: <code>+00:00:38</code></p>
+<p>Basis: the PowerShell Event 4104 script block aligns with the corresponding Sysmon PowerShell execution using script context and the same evidence binding.</p>
+<p>Confidence: high.</p>
+<p>PCAP epoch timestamps were used as the reference network timebase.</p>
+<p>Full model: <code>evidence/clock-offsets.json</code></p>
+<h2>Reconstructed Timeline</h2>
+<p>The parser-generated normalized timeline contains nine events.</p>
+<h3>2026-07-14T12:00:41Z</h3>
+<p><code>WINWORD.EXE</code> opened the synthetic case attachment.</p>
+<p>Evidence: <code>host/sysmon.jsonl</code>, JSONL line 50001.</p>
+<h3>2026-07-14T12:00:42Z</h3>
+<p><code>WINWORD.EXE</code> spawned <code>powershell.exe</code>.</p>
+<p>Command detail:</p>
+<p><code>Invoke-SyntheticCaseSimulation -Mode Training</code></p>
+<p>Evidence: <code>host/sysmon.jsonl</code>, JSONL line 50002.</p>
+<h3>2026-07-14T12:00:42Z</h3>
+<p>PowerShell Event 4104 recorded:</p>
+<p><code>Training simulation: archive synthetic records and send them to the local collector.</code></p>
+<p>Evidence: <code>host/powershell-operational.jsonl</code>, JSONL line 1.</p>
+<h3>2026-07-14T12:00:45Z</h3>
+<p>A scheduled task named <code>Northstar Support Sync</code> was created through <code>schtasks.exe</code>.</p>
+<p>Behavioral ATT&amp;CK mapping: T1053.005 — Scheduled Task/Job: Scheduled Task.</p>
+<p>Evidence: <code>host/sysmon.jsonl</code>, JSONL line 50003.</p>
+<h3>2026-07-14T12:00:46Z</h3>
+<p><code>tar.exe</code> created:</p>
+<p><code>case-export.zip</code></p>
+<p>from:</p>
+<p><code>synthetic-records.csv</code></p>
+<p>Behavioral ATT&amp;CK mapping: T1560 — Archive Collected Data.</p>
+<p>Evidence: <code>host/sysmon.jsonl</code>, JSONL line 50004.</p>
+<h3>2026-07-14T12:00:49Z</h3>
+<p><code>curl.exe</code> initiated a network connection to:</p>
+<p><code>sync-v1.updates-example.invalid:8443</code></p>
+<p>Behavioral ATT&amp;CK mapping: T1041 — Exfiltration Over C2 Channel.</p>
+<p>This is a behavioral mapping only; malicious C2 intent is not established.</p>
+<p>Evidence: <code>host/sysmon.jsonl</code>, JSONL line 50005.</p>
+<h3>2026-07-14T12:00:49.049000Z</h3>
+<p>PCAP frame 49 recorded an HTTP POST to:</p>
+<p><code>/collect/8d919c5bfb955d01/case-export.zip</code></p>
+<p>Destination:</p>
+<ul>
+<li>Host: <code>sync-v1.updates-example.invalid</code></li>
+<li>IP: <code>203.0.113.195</code></li>
+<li>Port: <code>8443</code></li>
+<li>TCP stream: <code>0</code></li>
+<li>Content-Length: <code>53891</code></li>
+</ul>
+<p>The POST body was reconstructed into a valid ZIP archive.</p>
+<p>Evidence: <code>network/incident.pcap</code>, frame 49, TCP stream 0.</p>
+<h3>2026-07-14T12:00:50Z</h3>
+<p>PowerShell deleted:</p>
+<p><code>case-export.zip</code></p>
+<p>Evidence: <code>host/sysmon.jsonl</code>, JSONL line 50006.</p>
+<h3>2026-07-14T12:00:50.050000Z</h3>
+<p>The server returned:</p>
+<p><code>HTTP 201 Created</code></p>
+<p>Evidence: <code>network/incident.pcap</code>, frame 50, TCP stream 0.</p>
+<h2>Initial Access and Execution</h2>
+<p>The email artifact was sent from:</p>
+<p><code>Northstar Support &lt;support-v1@example.invalid&gt;</code></p>
+<p>to:</p>
+<p><code>analyst1@northstar.invalid</code></p>
+<p>with subject:</p>
+<p><code>Case export reconciliation 8d919c5b</code></p>
+<p>The attachment was:</p>
+<p><code>case-instructions-8d919c5b.txt</code></p>
+<p>The decoded attachment contained the case evidence binding and marker.</p>
+<p>The evidence supports delivery context through email.</p>
+<p>The evidence does not prove that the <code>.txt</code> attachment itself executed. Host telemetry instead shows <code>WINWORD.EXE</code> opening the synthetic case attachment and then spawning PowerShell.</p>
+<p>Disposition: confirmed delivery context and confirmed subsequent execution chain.</p>
+<h2>Persistence</h2>
+<p>A scheduled task named:</p>
+<p><code>Northstar Support Sync</code></p>
+<p>was created shortly after PowerShell execution.</p>
+<p>This is consistent with scheduled-task persistence behavior.</p>
+<p>Disposition: confirmed scheduled-task creation.</p>
+<p>The evidence does not establish whether the task later executed.</p>
+<h2>Privilege Escalation</h2>
+<p>No supplied case-correlated evidence confirms:</p>
+<ul>
+<li>SYSTEM execution</li>
+<li>administrator token use</li>
+<li>privilege transition</li>
+<li>explicit elevation</li>
+<li>credential theft</li>
+<li>elevated remote service execution</li>
+</ul>
+<p>Scheduled-task creation alone is insufficient to establish privilege escalation.</p>
+<p>Disposition: not confirmed.</p>
+<h2>Lateral Movement</h2>
+<p>All six case-correlated Sysmon events occur on:</p>
+<p><code>NS-WKS-101</code></p>
+<p>No supplied case-correlated evidence confirms movement to another internal host through SMB, RDP, WinRM, WMI, PsExec, remote services, or administrative shares.</p>
+<p>The external/collector network connection is not lateral movement.</p>
+<p>Disposition: not confirmed.</p>
+<h2>Data Staging</h2>
+<p>The evidence confirms archive staging through:</p>
+<p><code>tar -a -c -f case-export.zip synthetic-records.csv</code></p>
+<p>Disposition: confirmed.</p>
+<h2>Data Transfer</h2>
+<p>The evidence confirms a technical transfer.</p>
+<p>Supporting evidence:</p>
+<ol>
+<li>Sysmon records <code>curl.exe</code> network communication.</li>
+<li>PCAP records an HTTP POST with a 53,891-byte body.</li>
+<li>The POST body reconstructs into a valid ZIP.</li>
+<li>The ZIP contains the expected synthetic records and evidence marker.</li>
+<li>The server returned HTTP <code>201 Created</code>.</li>
+</ol>
+<p>Disposition: confirmed technical transfer.</p>
+<p>The evidence does not establish malicious intent because the PowerShell telemetry explicitly labels the action as a training simulation sending synthetic records to a local collector.</p>
+<h2>Recovery and Impact</h2>
+<p>Recovered archive:</p>
+<p><code>recovered/case-export.zip</code></p>
+<p>SHA-256:</p>
+<p><code>8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825</code></p>
+<p>Recovered members:</p>
+<ul>
+<li><code>synthetic-records.csv</code></li>
+<li><code>evidence-marker.txt</code></li>
+</ul>
+<p>The CSV contains exactly:</p>
+<p><code>5,137</code></p>
+<p>data records excluding the header.</p>
+<p>The recovered marker is:</p>
+<p><code>UBI-A9-SHARED-B1</code></p>
+<p>Disposition: archive reconstruction and record recovery confirmed.</p>
+<h2>Indicators of Interest</h2>
+<h3>Domain</h3>
+<p><code>sync-v1.updates-example.invalid</code></p>
+<h3>IPv4</h3>
+<p><code>203.0.113.195</code></p>
+<h3>Recovered archive SHA-256</h3>
+<p><code>8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825</code></p>
+<p>These values should be treated as case-scoped indicators. The evidence itself identifies the activity as synthetic/training, so they should not be globally classified as malicious based on this case alone.</p>
+<p>Full IOC set: <code>ioc-set.csv</code></p>
+<h2>Detection Engineering</h2>
+<p>A generic behavioral detection was created for:</p>
+<p>Office → PowerShell → archive staging → command-line network egress</p>
+<p>Rule:</p>
+<p><code>DETECT-OFFICE-PS-ARCHIVE-EGRESS</code></p>
+<p>The detector does not rely on the private marker, case binding, exact event IDs, domain, IP address, or recovered-record count.</p>
+<p>Regression results:</p>
+<ul>
+<li>positive fixture: pass</li>
+<li>benign administrative archive fixture: pass</li>
+<li>different-user correlation fixture: pass</li>
+<li>outside-window fixture: pass</li>
+</ul>
+<p>Total: 4/4 passed.</p>
+<p>The same generic detector was run against the real case-correlated Sysmon events and alerted successfully.</p>
+<p>Matched sequence:</p>
+<ul>
+<li><code>powershell.exe &lt;- WINWORD.EXE</code></li>
+<li><code>tar.exe &lt;- powershell.exe</code></li>
+<li><code>curl.exe &lt;- powershell.exe</code></li>
+</ul>
+<p>Elapsed correlation time: 7 seconds.</p>
+<h2>Competing Hypotheses</h2>
+<h3>Hypothesis 1 — Malicious compromise with data exfiltration</h3>
+<p>Evidence supporting:</p>
+<ul>
+<li>Office-to-PowerShell execution chain</li>
+<li>scheduled-task creation</li>
+<li>archive staging</li>
+<li>command-line transfer utility</li>
+<li>HTTP POST of staged archive</li>
+<li>local archive deletion</li>
+</ul>
+<p>Evidence challenging:</p>
+<ul>
+<li>PowerShell explicitly labels the activity a training simulation</li>
+<li>command includes <code>-Mode Training</code></li>
+<li>transferred data is synthetic</li>
+<li>destination is described as a local collector</li>
+<li>no privilege escalation confirmed</li>
+<li>no lateral movement confirmed</li>
+</ul>
+<p>Assessment: Technically plausible from behavior alone, but malicious intent is not established.</p>
+<h3>Hypothesis 2 — Authorized synthetic training simulation</h3>
+<p>Evidence supporting:</p>
+<ul>
+<li>PowerShell Event 4104 explicitly identifies a training simulation</li>
+<li>PowerShell command uses <code>-Mode Training</code></li>
+<li>transferred records are synthetic</li>
+<li>recovered marker identifies a training evidence set</li>
+<li>behavior occurs in a short, internally consistent sequence</li>
+</ul>
+<p>Evidence challenging:</p>
+<ul>
+<li>the behavior intentionally resembles real attacker tradecraft</li>
+<li>scheduled-task creation, staging, transfer, and deletion would warrant investigation in a production environment</li>
+</ul>
+<p>Assessment: Best-supported interpretation of the supplied evidence.</p>
+<h2>Response Recommendations</h2>
+<p>If this pattern occurs in a live environment without confirmed authorization:</p>
+<ol>
+<li>Isolate the affected endpoint.</li>
+<li>Preserve volatile and endpoint evidence.</li>
+<li>Validate the Office document source and user action.</li>
+<li>Review the scheduled task and disable it if unauthorized.</li>
+<li>Identify and preserve any staged archives before deletion.</li>
+<li>Block or contain the destination after validating business impact.</li>
+<li>Review account activity and reset credentials if compromise is suspected.</li>
+<li>Hunt for the same behavioral sequence across other hosts.</li>
+<li>Review proxy, EDR, DNS, and network telemetry for additional transfers.</li>
+<li>Do not suppress the detection broadly; use narrowly scoped allow-list conditions for approved training or automation.</li>
+</ol>
+<h2>Analytical Limitations</h2>
+<p>The supplied evidence set does not establish:</p>
+<ul>
+<li>whether activity occurred outside the evidence window;</li>
+<li>whether credentials were compromised;</li>
+<li>whether the scheduled task later executed;</li>
+<li>whether privilege escalation occurred outside supplied telemetry;</li>
+<li>whether lateral movement occurred outside supplied telemetry;</li>
+<li>whether the collector infrastructure should be considered malicious outside this synthetic case.</li>
+</ul>
+<p>Absence of evidence in the supplied dataset is not proof that an activity was impossible.</p>
+<h2>Final Assessment</h2>
+<p>The evidence confirms a complete technical chain from document-associated execution through PowerShell, scheduled-task creation, archive staging, outbound transfer, archive reconstruction, and post-transfer deletion.</p>
+<p>The transferred ZIP was reconstructed exactly and contains 5,137 synthetic records.</p>
+<p>The strongest-supported interpretation is an authorized or synthetic training simulation rather than a real malicious compromise, because the evidence explicitly labels the activity as training and synthetic.</p>
+<p>Technical transfer: confirmed.</p>
+<p>Malicious exfiltration intent: not established.</p>
+<p>Privilege escalation: not confirmed.</p>
+<p>Lateral movement: not confirmed.</p>
+</body>
+</html>

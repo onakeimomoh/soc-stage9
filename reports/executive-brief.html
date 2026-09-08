@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>executive-brief</title>
+<style>
+@page {
+  size: A4;
+  margin: 18mm 16mm 18mm 16mm;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111827;
+  font-size: 10.5pt;
+  line-height: 1.48;
+  margin: 0;
+}
+
+h1 {
+  font-size: 22pt;
+  margin: 0 0 14pt 0;
+  color: #111827;
+  border-bottom: 2px solid #374151;
+  padding-bottom: 8pt;
+}
+
+h2 {
+  font-size: 14.5pt;
+  margin: 18pt 0 7pt 0;
+  color: #1f2937;
+  break-after: avoid;
+}
+
+h3 {
+  font-size: 11.5pt;
+  margin: 13pt 0 5pt 0;
+  color: #374151;
+  break-after: avoid;
+}
+
+p {
+  margin: 5pt 0 8pt 0;
+}
+
+ul, ol {
+  margin: 5pt 0 9pt 20pt;
+  padding: 0;
+}
+
+li {
+  margin: 2.5pt 0;
+}
+
+code {
+  font-family: "DejaVu Sans Mono", "Liberation Mono", monospace;
+  font-size: 9pt;
+  background: #f3f4f6;
+  padding: 1pt 3pt;
+  border-radius: 2pt;
+  overflow-wrap: anywhere;
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f3f4f6;
+  border-left: 3px solid #6b7280;
+  padding: 8pt;
+}
+
+strong {
+  font-weight: 700;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #d1d5db;
+  margin: 14pt 0;
+}
+</style>
+</head>
+<body>
+<h1>Executive Incident Brief</h1>
+<h2>Summary</h2>
+<p>The investigation confirmed a short sequence on workstation <code>NS-WKS-101</code> involving an Office process, PowerShell, scheduled-task creation, archive staging, command-line network transfer, and deletion of the staged archive.</p>
+<p>Network evidence confirms that a 53,891-byte ZIP archive was transmitted over HTTP to a collector endpoint and accepted with an HTTP <code>201 Created</code> response.</p>
+<p>The archive was reconstructed successfully and contained exactly 5,137 synthetic records.</p>
+<h2>Business Impact</h2>
+<p>The supplied evidence confirms transfer of synthetic case records.</p>
+<p>No evidence confirms:</p>
+<ul>
+<li>privilege escalation;</li>
+<li>lateral movement;</li>
+<li>credential compromise;</li>
+<li>transfer of real production customer data.</li>
+</ul>
+<p>The recovered data is explicitly synthetic.</p>
+<h2>Key Assessment</h2>
+<p>The activity resembles attacker tradecraft and would warrant urgent investigation if observed unexpectedly in a production environment.</p>
+<p>However, the strongest evidence explicitly identifies the activity as a training simulation:</p>
+<p><code>Training simulation: archive synthetic records and send them to the local collector.</code></p>
+<p>The PowerShell command also uses:</p>
+<p><code>-Mode Training</code></p>
+<p>Therefore:</p>
+<ul>
+<li>Technical data transfer: confirmed</li>
+<li>Malicious intent: not established</li>
+<li>Privilege escalation: not confirmed</li>
+<li>Lateral movement: not confirmed</li>
+</ul>
+<h2>Confirmed Sequence</h2>
+<ol>
+<li>Office-associated attachment activity</li>
+<li>PowerShell execution</li>
+<li>Scheduled-task creation</li>
+<li>ZIP archive staging</li>
+<li>Command-line network connection</li>
+<li>HTTP POST of the archive</li>
+<li>Local archive deletion</li>
+<li>HTTP <code>201 Created</code> response</li>
+</ol>
+<h2>Recovered Data</h2>
+<p>Recovered records: <code>5,137</code></p>
+<p>Archive SHA-256:</p>
+<p><code>8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825</code></p>
+<h2>Detection Coverage</h2>
+<p>A generic behavioral rule was developed for:</p>
+<p>Office → PowerShell → archive staging → command-line egress</p>
+<p>The rule passed all positive and negative regression fixtures and also alerted on the supplied case evidence.</p>
+<h2>Recommended Action</h2>
+<p>For a real production alert with the same behavior:</p>
+<ul>
+<li>isolate the host if activity is unauthorized;</li>
+<li>preserve endpoint and network evidence;</li>
+<li>validate the Office document and user action;</li>
+<li>review and remove unauthorized scheduled tasks;</li>
+<li>identify staged archives and transfer destinations;</li>
+<li>investigate account compromise;</li>
+<li>hunt for the same sequence across other endpoints;</li>
+<li>retain the behavioral detection with narrowly scoped allow-listing for approved automation or training.</li>
+</ul>
+<h2>Executive Conclusion</h2>
+<p>The technical behavior is fully reconstructed and reproducible.</p>
+<p>The evidence confirms data staging and transfer, but the strongest-supported interpretation is a synthetic training exercise rather than a malicious incident.</p>
+</body>
+</html>
