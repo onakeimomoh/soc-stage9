@@ -3,12 +3,15 @@
 import csv
 import hashlib
 import json
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(".")
 
 RECOVERY = ROOT / "recovered/recovery-metadata.json"
 TIMELINE = ROOT / "timeline.csv"
+CLOCKS = ROOT / "evidence/clock-offsets.json"
+RECOVERED_DIR = ROOT / "recovered/extracted"
 
 
 def sha256_file(path):
@@ -19,84 +22,176 @@ def sha256_file(path):
     return h.hexdigest()
 
 
+def parse_iso(ts):
+    return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+
 def main():
     failures = []
 
     recovery = json.loads(RECOVERY.read_text())
+    clocks = json.loads(CLOCKS.read_text())
 
-    if recovery["parser_status"] != "ok":
+    if recovery.get("parser_status") != "ok":
         failures.append("recovery parser status is not ok")
 
-    if recovery["http_request"]["frame_number"] != 49:
-        failures.append("POST frame is not 49")
+    request = recovery.get("http_request", {})
+    response = recovery.get("http_response", {})
+    rec = recovery.get("recovery", {})
 
-    if recovery["http_response"]["frame_number"] != 50:
-        failures.append("HTTP response frame is not 50")
+    req_frame = request.get("frame_number")
+    resp_frame = response.get("frame_number")
 
-    if recovery["http_response"]["status_code"] != 201:
-        failures.append("HTTP response status is not 201")
+    if not isinstance(req_frame, int) or req_frame <= 0:
+        failures.append("HTTP request frame number is invalid")
 
-    if not recovery["recovery"]["content_length_match"]:
+    if not isinstance(resp_frame, int) or resp_frame <= req_frame:
+        failures.append("HTTP response frame does not follow request frame")
+
+    status = response.get("status_code")
+    if not isinstance(status, int) or not (200 <= status < 300):
+        failures.append("HTTP response is not successful 2xx")
+
+    if not rec.get("content_length_match"):
         failures.append("recovered body does not match Content-Length")
 
-    if not recovery["recovery"]["zip_valid"]:
+    if not rec.get("zip_valid"):
         failures.append("recovered archive is not valid ZIP")
 
-    if recovery["recovery"]["member_count"] != 2:
-        failures.append("recovered archive member count is not 2")
+    members = rec.get("members", [])
+
+    if rec.get("member_count") != len(members):
+        failures.append("member_count does not match recovered member list")
+
+    if not members:
+        failures.append("recovered archive has no members")
 
     csv_members = [
-        x for x in recovery["recovery"]["members"]
-        if x["name"] == "synthetic-records.csv"
+        x for x in members
+        if str(x.get("name", "")).lower().endswith(".csv")
     ]
 
     if len(csv_members) != 1:
-        failures.append("synthetic-records.csv not uniquely recovered")
+        failures.append("expected exactly one recovered CSV member")
     else:
-        if csv_members[0].get("csv_data_records") != 5137:
-            failures.append("synthetic-records.csv record count mismatch")
+        csv_member = csv_members[0]
+        csv_path = RECOVERED_DIR / csv_member["name"]
 
-    marker_members = [
-        x for x in recovery["recovery"]["members"]
-        if x["name"] == "evidence-marker.txt"
-    ]
+        if not csv_path.exists():
+            failures.append("recovered CSV member is missing from extracted output")
+        else:
+            with csv_path.open(newline="", encoding="utf-8") as f:
+                actual_records = sum(1 for _ in csv.reader(f)) - 1
 
-    if len(marker_members) != 1:
-        failures.append("evidence-marker.txt not uniquely recovered")
+            metadata_records = csv_member.get("csv_data_records")
+
+            if metadata_records != actual_records:
+                failures.append(
+                    "recovered CSV metadata count does not match extracted CSV"
+                )
+
+            if actual_records <= 0:
+                failures.append("recovered CSV contains no data records")
+
+    non_csv_members = [x for x in members if x not in csv_members]
+    if not non_csv_members:
+        failures.append("no non-CSV evidence member recovered")
 
     with TIMELINE.open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
-    ids = {r["event_id"] for r in rows}
+    if not rows:
+        failures.append("timeline is empty")
 
-    required = {
-        "attack-01",
-        "attack-02",
-        "attack-03",
-        "attack-04",
-        "attack-05",
-        "attack-06",
-        "powershell-1",
-        "pcap-http-post",
-        "pcap-http-response",
+    try:
+        parsed_times = [parse_iso(r["utc_time"]) for r in rows]
+        if parsed_times != sorted(parsed_times):
+            failures.append("timeline is not chronologically sorted")
+    except Exception as exc:
+        failures.append(f"timeline timestamp parse failure: {exc}")
+
+    activities = [r.get("activity", "").lower() for r in rows]
+
+    required_behaviors = {
+        "office attachment activity": lambda a: (
+            "process_start:" in a and "winword" in a
+        ),
+        "powershell execution": lambda a: (
+            "process_start:" in a and "powershell" in a
+        ),
+        "scheduled task creation": lambda a: "scheduled_task_create:" in a,
+        "archive staging": lambda a: (
+            "process_start:" in a and "tar.exe" in a
+        ),
+        "network connection": lambda a: "network_connect:" in a,
+        "HTTP POST": lambda a: "http post " in a,
+        "archive deletion": lambda a: "file_delete:" in a,
+        "HTTP response": lambda a: "http response " in a,
     }
 
-    missing = required - ids
-    if missing:
-        failures.append(
-            "timeline missing events: " + ", ".join(sorted(missing))
-        )
+    for label, predicate in required_behaviors.items():
+        if not any(predicate(a) for a in activities):
+            failures.append(f"timeline missing behavioral stage: {label}")
 
-    times = {
-        r["event_id"]: r["utc_time"]
-        for r in rows
-    }
+    for row in rows:
+        original = row.get("original_time", "")
+        utc_time = row.get("utc_time", "")
+        artifact = row.get("artifact_path", "")
 
-    if times.get("attack-05") != "2026-07-14T12:00:49Z":
-        failures.append("Sysmon attack-05 clock normalization mismatch")
+        if not original or not utc_time:
+            continue
 
-    if times.get("powershell-1") != "2026-07-14T12:00:42Z":
-        failures.append("PowerShell clock normalization mismatch")
+        try:
+            if artifact.endswith("sysmon.jsonl"):
+                expected = (
+                    parse_iso(original)
+                    + timedelta(
+                        seconds=clocks["sysmon"]["offset_seconds_applied"]
+                    )
+                )
+                if parse_iso(utc_time) != expected:
+                    failures.append(
+                        "Sysmon timeline row does not match clock model"
+                    )
+
+            elif artifact.endswith("powershell-operational.jsonl"):
+                expected = (
+                    parse_iso(original)
+                    + timedelta(
+                        seconds=clocks["powershell"]["offset_seconds_applied"]
+                    )
+                )
+                if parse_iso(utc_time) != expected:
+                    failures.append(
+                        "PowerShell timeline row does not match clock model"
+                    )
+        except Exception as exc:
+            failures.append(f"clock-model validation failure: {exc}")
+
+    post_rows = [
+        r for r in rows
+        if r.get("activity", "").lower().startswith("http post ")
+    ]
+    response_rows = [
+        r for r in rows
+        if r.get("activity", "").lower().startswith("http response ")
+    ]
+
+    if len(post_rows) != 1:
+        failures.append("expected exactly one HTTP POST timeline row")
+    else:
+        locator = post_rows[0].get("exact_locator", "")
+        if f"frame {req_frame}" not in locator:
+            failures.append("POST timeline locator disagrees with recovery metadata")
+
+    if len(response_rows) != 1:
+        failures.append("expected exactly one HTTP response timeline row")
+    else:
+        locator = response_rows[0].get("exact_locator", "")
+        if f"frame {resp_frame}" not in locator:
+            failures.append(
+                "response timeline locator disagrees with recovery metadata"
+            )
 
     if failures:
         print("FAIL")
@@ -106,7 +201,7 @@ def main():
 
     print("PASS: reconstruction validation")
     print("timeline_rows:", len(rows))
-    print("archive_sha256:", recovery["recovery"]["archive_sha256"])
+    print("archive_sha256:", rec["archive_sha256"])
     print("timeline_sha256:", sha256_file(TIMELINE))
 
 

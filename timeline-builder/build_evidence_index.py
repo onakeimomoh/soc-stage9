@@ -22,7 +22,7 @@ PCAP = Path(
 
 RECOVERY = Path("recovered/recovery-metadata.json")
 RECOVERED_ZIP = Path("recovered/case-export.zip")
-RECOVERED_CSV = Path("recovered/extracted/synthetic-records.csv")
+RECOVERED_DIR = Path("recovered/extracted")
 TIMELINE = Path("timeline.csv")
 CLOCK = Path("evidence/clock-offsets.json")
 FINDINGS = Path("evidence/case-findings.json")
@@ -71,11 +71,112 @@ recovery = json.loads(RECOVERY.read_text())
 findings = json.loads(FINDINGS.read_text())
 assignment = json.loads(ASSIGNMENT.read_text())
 
-csv_member = next(
+with TIMELINE.open(newline="", encoding="utf-8") as f:
+    timeline_rows = list(csv.DictReader(f))
+
+csv_members = [
     x for x in recovery["recovery"]["members"]
-    if x["name"] == "synthetic-records.csv"
-)
+    if str(x.get("name", "")).lower().endswith(".csv")
+]
+
+if len(csv_members) != 1:
+    raise RuntimeError(
+        "Expected exactly one recovered CSV member; "
+        f"found {len(csv_members)}"
+    )
+
+csv_member = csv_members[0]
 record_count = csv_member["csv_data_records"]
+RECOVERED_CSV = RECOVERED_DIR / csv_member["name"]
+
+
+def timeline_match(predicate):
+    matches = [r for r in timeline_rows if predicate(r)]
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"Expected exactly one timeline match; found {len(matches)}"
+        )
+    return matches[0]
+
+
+def jsonl_line_number(row):
+    locator = row["exact_locator"]
+    prefix = "JSONL line "
+    if prefix not in locator:
+        raise RuntimeError(f"JSONL line not present in locator: {locator}")
+    return int(locator.split(prefix, 1)[1].split(";", 1)[0])
+
+
+sysmon_rows = [
+    r for r in timeline_rows
+    if r["artifact_path"] == str(SYSMON)
+]
+
+if not sysmon_rows:
+    raise RuntimeError("No Sysmon rows found in generated timeline")
+
+sysmon_lines = sorted(jsonl_line_number(r) for r in sysmon_rows)
+sysmon_range_locator = (
+    f"JSONL lines {sysmon_lines[0]}-{sysmon_lines[-1]}"
+)
+
+office_row = timeline_match(
+    lambda r:
+        r["artifact_path"] == str(SYSMON)
+        and "process_start:" in r["activity"].lower()
+        and "winword" in r["activity"].lower()
+)
+
+powershell_process_row = timeline_match(
+    lambda r:
+        r["artifact_path"] == str(SYSMON)
+        and "process_start:" in r["activity"].lower()
+        and "powershell" in r["activity"].lower()
+)
+
+office_line = jsonl_line_number(office_row)
+powershell_line = jsonl_line_number(powershell_process_row)
+initial_access_locator = (
+    f"JSONL lines {min(office_line, powershell_line)}-"
+    f"{max(office_line, powershell_line)}"
+)
+
+network_row = timeline_match(
+    lambda r:
+        r["artifact_path"] == str(SYSMON)
+        and "network_connect:" in r["activity"].lower()
+)
+
+network_locator = f"JSONL line {jsonl_line_number(network_row)}"
+
+staging_row = timeline_match(
+    lambda r:
+        r["artifact_path"] == str(SYSMON)
+        and "process_start:" in r["activity"].lower()
+        and "tar.exe" in r["activity"].lower()
+)
+
+staging_locator = f"JSONL line {jsonl_line_number(staging_row)}"
+
+req = recovery["http_request"]
+resp = recovery["http_response"]
+pcap_locator = (
+    f"frames {req['frame_number']}-{resp['frame_number']}; "
+    f"tcp.stream {resp['tcp_stream']}"
+)
+
+powershell_rows = [
+    r for r in timeline_rows
+    if r["artifact_path"] == str(POWERSHELL)
+]
+
+if len(powershell_rows) != 1:
+    raise RuntimeError(
+        "Expected exactly one PowerShell timeline row; "
+        f"found {len(powershell_rows)}"
+    )
+
+powershell_locator = powershell_rows[0]["exact_locator"]
 
 rows = [
     row(
@@ -100,7 +201,7 @@ rows = [
         "Initial Access",
         "WINWORD launched the case execution chain and spawned PowerShell.",
         str(SYSMON),
-        "JSONL lines 50001-50002",
+        initial_access_locator,
         (
             "WINWORD.EXE opened the synthetic case attachment and "
             "powershell.exe followed under the same user/binding."
@@ -115,7 +216,7 @@ rows = [
         "Network Infrastructure",
         "Case-linked network connection targeted the collector endpoint.",
         str(SYSMON),
-        "JSONL line 50005",
+        network_locator,
         "curl.exe connected to sync-v1.updates-example.invalid:8443.",
         "It does not by itself prove malicious command-and-control.",
         "high",
@@ -127,10 +228,11 @@ rows = [
         "Network Infrastructure",
         "The archive was transferred by HTTP POST and accepted by the server.",
         str(PCAP),
-        "frames 49-50; tcp.stream 0",
+        pcap_locator,
         (
-            "Frame 49 carries the archive POST body and frame 50 "
-            "returns HTTP 201 Created."
+            f"Frame {req['frame_number']} carries the archive POST body "
+            f"and frame {resp['frame_number']} returns HTTP "
+            f"{resp['status_code']} {resp['reason']}."
         ),
         "A successful transfer does not establish malicious intent.",
         "high",
@@ -142,7 +244,7 @@ rows = [
         "Privilege",
         "No privilege increase is confirmed in the case evidence.",
         str(SYSMON),
-        "JSONL lines 50001-50006",
+        sysmon_range_locator,
         (
             "All six non-noise case events remain under "
             "northstar\\analyst1 with no demonstrated identity transition."
@@ -160,7 +262,7 @@ rows = [
         "Lateral Movement",
         "No host-to-host lateral movement is confirmed.",
         str(SYSMON),
-        "JSONL lines 50001-50006",
+        sysmon_range_locator,
         "All six non-noise case events occur on NS-WKS-101.",
         (
             "This does not prove no movement occurred outside the supplied "
@@ -178,7 +280,7 @@ rows = [
         "Data Staging",
         "synthetic-records.csv was staged into case-export.zip.",
         str(SYSMON),
-        "JSONL line 50004",
+        staging_locator,
         "tar.exe created case-export.zip from synthetic-records.csv.",
         "The process event alone does not prove successful transfer.",
         "high",
@@ -217,7 +319,7 @@ rows = [
         "Alternative Hypothesis",
         "PowerShell explicitly labels the activity a training simulation.",
         str(POWERSHELL),
-        "JSONL line 1; Event 4104",
+        powershell_locator,
         (
             "Script block states training simulation and sending synthetic "
             "records to the local collector."
