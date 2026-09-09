@@ -9,7 +9,7 @@
     "manifest_signature": "aa55207a99e0b259ba498d1191bd324c78fd053e4d6724e3fa96f899700c94fe",
     "verified_before_use": true
   },
-  "commit": "REPLACE-WITH-FROZEN-40-CHARACTER-COMMIT",
+  "commit": "5ed6a6ac9005f0b47e85efb9679a3475032933d7",
   "supported_environment": {
     "os": "Kali GNU/Linux Rolling 2025.2",
     "cpu": "Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz; 2 vCPU",
@@ -22,25 +22,72 @@
     }
   },
   "commands": {
-    "provision": "",
-    "build": "",
-    "test": "",
-    "clean": ""
+    "provision": "python3 --version && git --version && tshark --version",
+    "build": "python3 timeline-builder/recover_archive.py && python3 timeline-builder/build_timeline.py && python3 timeline-builder/build_case_findings.py && python3 timeline-builder/build_evidence_index.py",
+    "test": "python3 timeline-builder/public_suite_runner.py && python3 tests/test_reconstruction.py && python3 tests/run_detection_regression.py && python3 tests/run_detection_on_case.py && python3 tests/run_reproducibility_check.py",
+    "clean": "rm -rf working/*"
   },
   "results": {
     "public_tests": {
-      "passed": 0,
+      "passed": 12,
       "failed": 0,
-      "report": ""
+      "report": "tests/public-test-results.json"
     },
-    "runtime_seconds": 0,
-    "peak_memory_mb": 0,
-    "output_hashes": {}
+    "runtime_seconds": 5.34,
+    "peak_memory_mb": 158.08,
+    "reproducibility": {
+      "outputs_compared": 8,
+      "all_outputs_identical": true,
+      "report": "tests/reproducibility-results.json"
+    },
+    "detection_regression": {
+      "passed": 4,
+      "failed": 0,
+      "report": "tests/detection-results.json"
+    },
+    "output_hashes": {
+      "recovered/case-export.zip": "8e994147097a29a84a1b162cc2aaae6f5592ff135406aaca9c1668d512b98825",
+      "recovered/recovery-metadata.json": "cff3d2e8563ebc44715311ec5b4beb575dba830720da7a136899da6ff9d39c2c",
+      "timeline.csv": "f1dca03c35cf28e3814f58141591abc2048f223dfb9d1be793f19860abd7253f",
+      "evidence/case-findings.json": "5d3bcc2d6e71a9829b04d03efbd18aa6015f5674acbd0adfe7b588b722a8a90e",
+      "evidence-index.csv": "7b812f9dc92b9641446ef412de5808fece412e6c4a44bdaf9b759d874a3f51b8",
+      "ioc-set.csv": "58d6667a34c0ca0eff86b108aa94b64b9dbbd7b8a2c71e3f8a5a956d9c28e421",
+      "tests/detection-results.json": "2b3de91ccf9e6aa72076e0f9fd8d30c69a1dd415d6c76991df72c798e9e6aded",
+      "tests/case-detection-result.json": "035c62f3f5b1529c16f3b4d7fb9139e440443411b58db92136cd426acf39c918"
+    }
   },
-  "inputs": [],
-  "outputs": [],
-  "manual_preconditions": [],
+  "inputs": [
+    "soc-analysis-stage-9-shared-b1.tar.gz",
+    "sealed Sysmon JSONL evidence",
+    "sealed PowerShell Operational JSONL evidence",
+    "sealed email evidence",
+    "sealed network PCAP evidence"
+  ],
+  "outputs": [
+    "incident-report.pdf",
+    "executive-brief.pdf",
+    "timeline.csv",
+    "ioc-set.csv",
+    "evidence-index.csv",
+    "recovered/case-export.zip",
+    "recovered/recovery-metadata.json",
+    "evidence/case-findings.json",
+    "tests/public-test-results.json",
+    "tests/reproducibility-results.json",
+    "tests/detection-results.json",
+    "tests/case-detection-result.json"
+  ],
+  "manual_preconditions": [
+    "Run commands from the repository root.",
+    "Python 3 and TShark must be available.",
+    "The assigned archive must be verified before extraction.",
+    "The sealed evidence must remain unmodified during analysis."
+  ],
   "known_limitations": [
-    "Zeek is not installed in the current environment; TShark is available as the packet-analysis fallback."
+    "Zeek is not installed in the current environment; TShark is used for packet analysis.",
+    "Sysmon and PowerShell clock corrections are correlation-derived because direct clock-synchronization telemetry was not supplied.",
+    "The supplied evidence does not confirm privilege escalation.",
+    "The supplied evidence does not confirm host-to-host lateral movement.",
+    "The evidence confirms technical HTTP transfer but does not establish malicious intent."
   ]
 }
