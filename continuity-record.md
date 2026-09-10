@@ -97,5 +97,6 @@ The analytical reconstruction, recovery, evidence indexing, behavioral
 detection, regression tests, reproducibility checks, incident report, and
 executive brief are complete.
 
-The live-defense recording and final submission integrity manifest remain
-packaging steps and must be completed before submission.
+The live-defense recording is complete and its URL is recorded in
+video-url.txt. The final submission integrity manifest remains the last
+packaging step before submission.
