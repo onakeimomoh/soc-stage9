@@ -3,6 +3,7 @@
 Candidate: UBI-2026-0246
 Variant: V1
 Project: SOC-A1
+Repository: https://github.com/onakeimomoh/soc-stage9
 Analytical freeze commit: 5ed6a6a
 
 ## Overview
@@ -61,7 +62,7 @@ Run from the repository root:
 
 Public suite:
 
-    python3 timeline-builder/public_suite_runner.py
+    python3 timeline-builder/public_suite_runner.py tests/public-tests.json tests/public-test-results.json
 
 Result: 12 passed, 0 failed.
 

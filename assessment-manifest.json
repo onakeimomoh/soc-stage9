@@ -24,7 +24,7 @@
   "commands": {
     "provision": "python3 --version && git --version && tshark --version",
     "build": "python3 timeline-builder/recover_archive.py && python3 timeline-builder/build_timeline.py && python3 timeline-builder/build_case_findings.py && python3 timeline-builder/build_evidence_index.py",
-    "test": "python3 timeline-builder/public_suite_runner.py && python3 tests/test_reconstruction.py && python3 tests/run_detection_regression.py && python3 tests/run_detection_on_case.py && python3 tests/run_reproducibility_check.py",
+    "test": "python3 timeline-builder/public_suite_runner.py tests/public-tests.json tests/public-test-results.json && python3 tests/test_reconstruction.py && python3 tests/run_detection_regression.py && python3 tests/run_detection_on_case.py && python3 tests/run_reproducibility_check.py",
     "clean": "rm -rf working/*"
   },
   "results": {
