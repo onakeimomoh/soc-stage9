@@ -7,6 +7,7 @@ from pathlib import Path
 ps_path = Path("working/evidence/sealed-evidence/evidence/host/powershell-operational.jsonl")
 sysmon_path = Path("working/evidence/sealed-evidence/evidence/host/sysmon.jsonl")
 
+# Derive the case binding from the supplied PowerShell evidence.
 binding = None
 
 with ps_path.open(encoding="utf-8-sig") as f:
@@ -15,6 +16,7 @@ with ps_path.open(encoding="utf-8-sig") as f:
             continue
 
         event = json.loads(line)
+
         text = json.dumps(event, ensure_ascii=False)
         match = re.search(r"\b[0-9a-fA-F]{16}\b", text)
 
